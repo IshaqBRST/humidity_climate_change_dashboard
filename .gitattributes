@@ -1,1 +1,2 @@
 *.geojson filter=lfs diff=lfs merge=lfs -text
+California_County_Boundaries.geojson filter=lfs diff=lfs merge=lfs -text
