@@ -6,8 +6,8 @@ import geopandas as gpd
 from shapely.geometry import mapping
 
 # Load the NetCDF file
-input_folder_path = './temperature_data/raw'
-output_folder_path = './temperature_data/processed/'
+input_folder_path = './humidity/raw'
+output_folder_path = './humidity/processed/'
 california_boundary_file = "California_County_Boundaries.geojson"
 
 nc4_files = [file for file in os.listdir(input_folder_path) if file.endswith('.nc4')]
@@ -26,8 +26,8 @@ def clip_california_data(ds):
             del clipped_ds[var].attrs['grid_mapping']
     return clipped_ds
 
-temperature_datasets = {}
-temperature_dataframes = {}
+humidity_datasets = {}
+humidity_dataframes = {}
 
 # Load datasets into dictionary, indexing my date
 for nc4_file in nc4_files:
@@ -35,21 +35,21 @@ for nc4_file in nc4_files:
     date = nc4_file.split('.')[1][1:]
     ds = xr.open_dataset(os.path.join(input_folder_path, nc4_file))
     
-    temperature_datasets[f'{date}'] = ds
+    humidity_datasets[f'{date}'] = ds
 
 
-# Turn each dataset into a dataframe containing the data, latitude, longitude and temperature
-for date, ds in temperature_datasets.items():
+# Turn each dataset into a dataframe containing the data, latitude, longitude and humidity
+for date, ds in humidity_datasets.items():
     
     # Clip data using California boundary
     clipped_ds = clip_california_data(ds)
     print(f'{date} succesfully clipped')
 
-    # Access the 'AvgSurfT_tavg' variable
-    avg_surface_temperature_var = clipped_ds['AvgSurfT_tavg']
+    # Access the 'Qair_f_inst' variable
+    specific_humidity_variable = clipped_ds['Qair_f_inst']
     
     # Convert the variable to a pandas DataFrame
-    df = avg_surface_temperature_var.to_dataframe(name='AvgSurfT_tavg')
+    df = specific_humidity_variable.to_dataframe(name='Qair_f_inst')
     
     # Turn lat,lon,date date (currently used as index) to columns
     other_data = df.index.to_frame(index = True)   
@@ -63,10 +63,10 @@ for date, ds in temperature_datasets.items():
     df['time'] = df['time'].apply(str).apply(lambda x: x[:10])
 
     
-    temperature_dataframes[f'{date}'] = df
+    humidity[f'{date}'] = df
 
 # Save dataframes to processed folder 
-for date, df in temperature_dataframes.items():
+for date, df in humidity_dataframes.items():
     date = date[:4] + '-' +  date[4:6] + '-' + date[6:]
     df.to_csv(output_folder_path+date+'.csv')
 
